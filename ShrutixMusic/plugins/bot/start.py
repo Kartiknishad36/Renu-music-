@@ -16,7 +16,6 @@ from ShrutixMusic.utils.database import (
     blacklisted_chats,
     get_lang,
     is_banned_user,
-    is_on_off,
 )
 from ShrutixMusic.utils.decorators.language import LanguageStart
 from ShrutixMusic.utils.formatters import get_readable_time
@@ -86,12 +85,18 @@ async def start_pm(client, message: Message, _):
         await start_log(message, action="checked track info")
         return
     out = private_panel(_)
-    await message.reply_photo(
-        photo=config.START_IMG_URL,
-        caption=_["start_2"].format(message.from_user.mention, nand.mention),
-        reply_markup=InlineKeyboardMarkup(out),
-        effect_id=effect_id,
-    )
+    try:
+        await message.reply_photo(
+            photo=config.START_IMG_URL,
+            caption=_["start_2"].format(message.from_user.mention, nand.mention),
+            reply_markup=InlineKeyboardMarkup(out),
+            effect_id=effect_id,
+        )
+    except Exception:
+        await message.reply_text(
+            _["start_2"].format(message.from_user.mention, nand.mention),
+            reply_markup=InlineKeyboardMarkup(out),
+        )
     await start_log(message, action="started the bot")
 
 
@@ -100,12 +105,20 @@ async def start_pm(client, message: Message, _):
 async def start_gp(client, message: Message, _):
     out = start_panel(_)
     uptime = int(time.time() - _boot_)
-    await message.reply_photo(
-        photo=config.START_IMG_URL,
-        caption=_["start_1"].format(nand.mention, get_readable_time(uptime)),
-        reply_markup=InlineKeyboardMarkup(out),
-    )
-    await start_log(message, action="started the bot in group")
+    caption = _["start_1"].format(nand.mention, get_readable_time(uptime))
+    markup = InlineKeyboardMarkup(out)
+    try:
+        await message.reply_photo(
+            photo=config.START_IMG_URL,
+            caption=caption,
+            reply_markup=markup,
+        )
+    except Exception:
+        await message.reply_text(caption, reply_markup=markup)
+    try:
+        await start_log(message, action="started the bot in group")
+    except Exception:
+        pass
     return await add_served_chat(message.chat.id)
 
 
@@ -118,7 +131,7 @@ async def welcome(client, message: Message):
             if await is_banned_user(member.id):
                 try:
                     await message.chat.ban_member(member.id)
-                except:
+                except Exception:
                     pass
             if member.id == nand.id:
                 if message.chat.type != ChatType.SUPERGROUP:
@@ -136,16 +149,21 @@ async def welcome(client, message: Message):
                     return await nand.leave_chat(message.chat.id)
 
                 out = start_panel(_)
-                await message.reply_photo(
-                    photo=config.START_IMG_URL,
-                    caption=_["start_3"].format(
-                        message.from_user.first_name,
-                        nand.mention,
-                        message.chat.title,
-                        nand.mention,
-                    ),
-                    reply_markup=InlineKeyboardMarkup(out),
+                caption = _["start_3"].format(
+                    message.from_user.first_name,
+                    nand.mention,
+                    message.chat.title,
+                    nand.mention,
                 )
+                markup = InlineKeyboardMarkup(out)
+                try:
+                    await message.reply_photo(
+                        photo=config.START_IMG_URL,
+                        caption=caption,
+                        reply_markup=markup,
+                    )
+                except Exception:
+                    await message.reply_text(caption, reply_markup=markup)
                 await add_served_chat(message.chat.id)
                 await message.stop_propagation()
         except Exception as ex:
