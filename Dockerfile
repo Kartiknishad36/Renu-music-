@@ -10,6 +10,8 @@ RUN curl -L https://johnvansickle.com/ffmpeg/releases/ffmpeg-release-amd64-stati
 COPY . /app/
 WORKDIR /app/
 
-RUN pip3 install --no-cache-dir -r requirements.txt
+RUN pip3 install --no-cache-dir -r requirements.txt && \
+    chmod +x start
 
+# health_server binds $PORT for Web Service; bot runs via start
 CMD ["bash", "start"]
