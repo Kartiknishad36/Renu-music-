@@ -54,7 +54,7 @@ async def settings_mar(client, message: Message, _):
 async def settings_cb(client, CallbackQuery, _):
     try:
         await CallbackQuery.answer(_["set_cb_5"])
-    except:
+    except Exception:
         pass
     buttons = setting_markup(_)
     return await CallbackQuery.edit_message_text(
@@ -72,11 +72,10 @@ async def settings_cb(client, CallbackQuery, _):
 async def settings_back_markup(client, CallbackQuery: CallbackQuery, _):
     try:
         await CallbackQuery.answer()
-    except:
+    except Exception:
         pass
     if CallbackQuery.message.chat.type == ChatType.PRIVATE:
         await nand.resolve_peer(OWNER_ID)
-        OWNER = OWNER_ID
         buttons = private_panel(_)
         return await CallbackQuery.edit_message_text(
             _["start_2"].format(CallbackQuery.from_user.mention, nand.mention),
@@ -101,30 +100,27 @@ async def without_Admin_rights(client, CallbackQuery, _):
     if command == "SEARCHANSWER":
         try:
             return await CallbackQuery.answer(_["setting_2"], show_alert=True)
-        except:
+        except Exception:
             return
     if command == "PLAYMODEANSWER":
         try:
             return await CallbackQuery.answer(_["setting_5"], show_alert=True)
-        except:
+        except Exception:
             return
     if command == "PLAYTYPEANSWER":
         try:
             return await CallbackQuery.answer(_["setting_6"], show_alert=True)
-        except:
+        except Exception:
             return
     if command == "AUTHANSWER":
         try:
             return await CallbackQuery.answer(_["setting_3"], show_alert=True)
-        except:
+        except Exception:
             return
     if command == "VOTEANSWER":
         try:
-            return await CallbackQuery.answer(
-                _["setting_8"],
-                show_alert=True,
-            )
-        except:
+            return await CallbackQuery.answer(_["setting_8"], show_alert=True)
+        except Exception:
             return
     if command == "ANSWERVOMODE":
         current = await get_upvote_count(CallbackQuery.message.chat.id)
@@ -133,39 +129,27 @@ async def without_Admin_rights(client, CallbackQuery, _):
                 _["setting_9"].format(current),
                 show_alert=True,
             )
-        except:
+        except Exception:
             return
     if command == "PM":
         try:
             await CallbackQuery.answer(_["set_cb_2"], show_alert=True)
-        except:
+        except Exception:
             pass
         playmode = await get_playmode(CallbackQuery.message.chat.id)
-        if playmode == "Direct":
-            Direct = True
-        else:
-            Direct = None
+        Direct = True if playmode == "Direct" else None
         is_non_admin = await is_nonadmin_chat(CallbackQuery.message.chat.id)
-        if not is_non_admin:
-            Group = True
-        else:
-            Group = None
+        Group = True if not is_non_admin else None
         playty = await get_playtype(CallbackQuery.message.chat.id)
-        if playty == "Everyone":
-            Playtype = None
-        else:
-            Playtype = True
+        Playtype = None if playty == "Everyone" else True
         buttons = playmode_users_markup(_, Direct, Group, Playtype)
     if command == "AU":
         try:
             await CallbackQuery.answer(_["set_cb_1"], show_alert=True)
-        except:
+        except Exception:
             pass
         is_non_admin = await is_nonadmin_chat(CallbackQuery.message.chat.id)
-        if not is_non_admin:
-            buttons = auth_users_markup(_, True)
-        else:
-            buttons = auth_users_markup(_)
+        buttons = auth_users_markup(_, True) if not is_non_admin else auth_users_markup(_)
     if command == "VM":
         mode = await is_skipmode(CallbackQuery.message.chat.id)
         current = await get_upvote_count(CallbackQuery.message.chat.id)
@@ -177,29 +161,31 @@ async def without_Admin_rights(client, CallbackQuery, _):
     except MessageNotModified:
         return
 
-from pyrogram.types import Message, InlineKeyboardMarkup, InlineKeyboardButton
-from ShrutixMusic import nand
 
-REPO_VIDEO = "https://files.catbox.moe/aoafwn.mp4"
+PAPA_MSG = (
+    "👑 <b>RENU MUSIC</b>\n"
+    "Owner: <b>Kartik Nishad</b>\n\n"
+    "🚫 Repo free me nahi milta.\n"
+    "<b>REPO LEGA JA PAHLE OWNER KO PAPA BOL KAR AA</b>\n\n"
+    "Waah 😎"
+)
+
 
 @nand.on_message(filters.command(["repo", "source"]) & filters.private)
 async def send_repo(_, message: Message):
-    await message.reply_video(
-        video=REPO_VIDEO,
-        caption=(
-            "<b>✨ ʜᴇʏ ᴅᴇᴀʀ, ʜᴇʀᴇ ɪꜱ ᴛʜᴇ ᴏꜰꜰɪᴄɪᴀʟ ʀᴇᴘᴏꜱɪᴛᴏʀʏ ᴏꜰ ᴛʜɪꜱ ʙᴏᴛ ✨</b>\n\n"
-            "🔗 ᴅᴏɴ'ᴛ ꜰᴏʀɢᴇᴛ ᴛᴏ ɢɪᴠᴇ ᴀ ꜱᴛᴀʀ 🌟 ᴀɴᴅ ꜰᴏʟʟᴏᴡ!\n\n"
-            "🧡 ᴄʀᴇᴅɪᴛꜱ : <a href='https://t.me/ShrutiBots'>@ShrutiBots</a>"
-        ),
-        reply_markup=InlineKeyboardMarkup(
-            [
-                [InlineKeyboardButton("🎵 Music + Management Bot Repo", url="https://github.com/NoxxOP/ShrutiMusic")],
-                [InlineKeyboardButton("🎧 Only Music Bot Repo", url="https://github.com/NoxxOP/ShrutixMusic")]
-            ]
-        ),
-        supports_streaming=True,
-        has_spoiler=True,
-    )
+    await message.reply_text(PAPA_MSG)
+
+
+@nand.on_callback_query(filters.regex("^repo_papa$") & ~BANNED_USERS)
+async def repo_papa_cb(_, CallbackQuery):
+    try:
+        await CallbackQuery.answer(
+            "REPO LEGA JA PAHLE OWNER KO PAPA BOL KAR AA\n— Kartik Nishad",
+            show_alert=True,
+        )
+    except Exception:
+        pass
+
 
 @nand.on_callback_query(filters.regex("FERRARIUDTI") & ~BANNED_USERS)
 @ActualAdminCB
@@ -211,23 +197,15 @@ async def addition(client, CallbackQuery, _):
     current = await get_upvote_count(CallbackQuery.message.chat.id)
     if mode == "M":
         final = current - 2
-        print(final)
         if final == 0:
-            return await CallbackQuery.answer(
-                _["setting_11"],
-                show_alert=True,
-            )
+            return await CallbackQuery.answer(_["setting_11"], show_alert=True)
         if final <= 2:
             final = 2
         await set_upvotes(CallbackQuery.message.chat.id, final)
     else:
         final = current + 2
-        print(final)
         if final == 17:
-            return await CallbackQuery.answer(
-                _["setting_12"],
-                show_alert=True,
-            )
+            return await CallbackQuery.answer(_["setting_12"], show_alert=True)
         if final >= 15:
             final = 15
         await set_upvotes(CallbackQuery.message.chat.id, final)
@@ -256,20 +234,14 @@ async def playmode_ans(client, CallbackQuery, _):
             await remove_nonadmin_chat(CallbackQuery.message.chat.id)
             Group = True
         playmode = await get_playmode(CallbackQuery.message.chat.id)
-        if playmode == "Direct":
-            Direct = True
-        else:
-            Direct = None
+        Direct = True if playmode == "Direct" else None
         playty = await get_playtype(CallbackQuery.message.chat.id)
-        if playty == "Everyone":
-            Playtype = None
-        else:
-            Playtype = True
+        Playtype = None if playty == "Everyone" else True
         buttons = playmode_users_markup(_, Direct, Group, Playtype)
     if command == "MODECHANGE":
         try:
             await CallbackQuery.answer(_["set_cb_3"], show_alert=True)
-        except:
+        except Exception:
             pass
         playmode = await get_playmode(CallbackQuery.message.chat.id)
         if playmode == "Direct":
@@ -279,20 +251,14 @@ async def playmode_ans(client, CallbackQuery, _):
             await set_playmode(CallbackQuery.message.chat.id, "Direct")
             Direct = True
         is_non_admin = await is_nonadmin_chat(CallbackQuery.message.chat.id)
-        if not is_non_admin:
-            Group = True
-        else:
-            Group = None
+        Group = True if not is_non_admin else None
         playty = await get_playtype(CallbackQuery.message.chat.id)
-        if playty == "Everyone":
-            Playtype = False
-        else:
-            Playtype = True
+        Playtype = False if playty == "Everyone" else True
         buttons = playmode_users_markup(_, Direct, Group, Playtype)
     if command == "PLAYTYPECHANGE":
         try:
             await CallbackQuery.answer(_["set_cb_3"], show_alert=True)
-        except:
+        except Exception:
             pass
         playty = await get_playtype(CallbackQuery.message.chat.id)
         if playty == "Everyone":
@@ -302,15 +268,9 @@ async def playmode_ans(client, CallbackQuery, _):
             await set_playtype(CallbackQuery.message.chat.id, "Everyone")
             Playtype = True
         playmode = await get_playmode(CallbackQuery.message.chat.id)
-        if playmode == "Direct":
-            Direct = True
-        else:
-            Direct = None
+        Direct = True if playmode == "Direct" else None
         is_non_admin = await is_nonadmin_chat(CallbackQuery.message.chat.id)
-        if not is_non_admin:
-            Group = True
-        else:
-            Group = None
+        Group = True if not is_non_admin else None
         buttons = playmode_users_markup(_, Direct, Group, Playtype)
     try:
         return await CallbackQuery.edit_message_reply_markup(
@@ -329,12 +289,12 @@ async def authusers_mar(client, CallbackQuery, _):
         if not _authusers:
             try:
                 return await CallbackQuery.answer(_["setting_4"], show_alert=True)
-            except:
+            except Exception:
                 return
         else:
             try:
                 await CallbackQuery.answer(_["set_cb_4"], show_alert=True)
-            except:
+            except Exception:
                 pass
             j = 0
             await CallbackQuery.edit_message_text(_["auth_6"])
@@ -348,20 +308,15 @@ async def authusers_mar(client, CallbackQuery, _):
                     user = await nand.get_users(user_id)
                     user = user.first_name
                     j += 1
-                except:
+                except Exception:
                     continue
                 msg += f"{j}➤ {user}[<code>{user_id}</code>]\n"
                 msg += f"   {_['auth_8']} {admin_name}[<code>{admin_id}</code>]\n\n"
             upl = InlineKeyboardMarkup(
                 [
                     [
-                        InlineKeyboardButton(
-                            text=_["BACK_BUTTON"], callback_data=f"AU"
-                        ),
-                        InlineKeyboardButton(
-                            text=_["CLOSE_BUTTON"],
-                            callback_data=f"close",
-                        ),
+                        InlineKeyboardButton(text=_ ["BACK_BUTTON"], callback_data="AU"),
+                        InlineKeyboardButton(text=_["CLOSE_BUTTON"], callback_data="close"),
                     ]
                 ]
             )
@@ -371,7 +326,7 @@ async def authusers_mar(client, CallbackQuery, _):
                 return
     try:
         await CallbackQuery.answer(_["set_cb_3"], show_alert=True)
-    except:
+    except Exception:
         pass
     if command == "AUTH":
         is_non_admin = await is_nonadmin_chat(CallbackQuery.message.chat.id)
@@ -392,10 +347,9 @@ async def authusers_mar(client, CallbackQuery, _):
 @nand.on_callback_query(filters.regex("VOMODECHANGE") & ~BANNED_USERS)
 @ActualAdminCB
 async def vote_change(client, CallbackQuery, _):
-    command = CallbackQuery.matches[0].group(1)
     try:
         await CallbackQuery.answer(_["set_cb_3"], show_alert=True)
-    except:
+    except Exception:
         pass
     mod = None
     if await is_skipmode(CallbackQuery.message.chat.id):
@@ -405,7 +359,6 @@ async def vote_change(client, CallbackQuery, _):
         await skip_on(CallbackQuery.message.chat.id)
     current = await get_upvote_count(CallbackQuery.message.chat.id)
     buttons = vote_mode_markup(_, current, mod)
-
     try:
         return await CallbackQuery.edit_message_reply_markup(
             reply_markup=InlineKeyboardMarkup(buttons)
