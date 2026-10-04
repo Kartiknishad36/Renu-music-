@@ -1,0 +1,15 @@
+# Render deploy config
+# Recommended: Background Worker (no public HTTP needed)
+# Alternative: Web Service also works now via health_server.py + PORT
+
+services:
+  - type: worker
+    name: renu-music
+    runtime: docker
+    plan: free
+    region: oregon
+    dockerfilePath: ./Dockerfile
+    dockerCommand: bash start
+    envVars:
+      - key: PYTHONUNBUFFERED
+        value: "1"
