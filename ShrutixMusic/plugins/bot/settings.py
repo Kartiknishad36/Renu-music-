@@ -97,6 +97,7 @@ async def settings_back_markup(client, CallbackQuery: CallbackQuery, _):
 @languageCB
 async def without_Admin_rights(client, CallbackQuery, _):
     command = CallbackQuery.matches[0].group(1)
+    buttons = None
     if command == "SEARCHANSWER":
         try:
             return await CallbackQuery.answer(_["setting_2"], show_alert=True)
@@ -154,6 +155,8 @@ async def without_Admin_rights(client, CallbackQuery, _):
         mode = await is_skipmode(CallbackQuery.message.chat.id)
         current = await get_upvote_count(CallbackQuery.message.chat.id)
         buttons = vote_mode_markup(_, current, mode)
+    if buttons is None:
+        return
     try:
         return await CallbackQuery.edit_message_reply_markup(
             reply_markup=InlineKeyboardMarkup(buttons)
@@ -225,6 +228,7 @@ async def addition(client, CallbackQuery, _):
 @ActualAdminCB
 async def playmode_ans(client, CallbackQuery, _):
     command = CallbackQuery.matches[0].group(1)
+    buttons = None
     if command == "CHANNELMODECHANGE":
         is_non_admin = await is_nonadmin_chat(CallbackQuery.message.chat.id)
         if not is_non_admin:
@@ -272,6 +276,8 @@ async def playmode_ans(client, CallbackQuery, _):
         is_non_admin = await is_nonadmin_chat(CallbackQuery.message.chat.id)
         Group = True if not is_non_admin else None
         buttons = playmode_users_markup(_, Direct, Group, Playtype)
+    if buttons is None:
+        return
     try:
         return await CallbackQuery.edit_message_reply_markup(
             reply_markup=InlineKeyboardMarkup(buttons)
@@ -315,8 +321,12 @@ async def authusers_mar(client, CallbackQuery, _):
             upl = InlineKeyboardMarkup(
                 [
                     [
-                        InlineKeyboardButton(text=_ ["BACK_BUTTON"], callback_data="AU"),
-                        InlineKeyboardButton(text=_["CLOSE_BUTTON"], callback_data="close"),
+                        InlineKeyboardButton(
+                            text=_["BACK_BUTTON"], callback_data="AU"
+                        ),
+                        InlineKeyboardButton(
+                            text=_["CLOSE_BUTTON"], callback_data="close"
+                        ),
                     ]
                 ]
             )
@@ -328,6 +338,7 @@ async def authusers_mar(client, CallbackQuery, _):
         await CallbackQuery.answer(_["set_cb_3"], show_alert=True)
     except Exception:
         pass
+    buttons = None
     if command == "AUTH":
         is_non_admin = await is_nonadmin_chat(CallbackQuery.message.chat.id)
         if not is_non_admin:
@@ -336,6 +347,8 @@ async def authusers_mar(client, CallbackQuery, _):
         else:
             await remove_nonadmin_chat(CallbackQuery.message.chat.id)
             buttons = auth_users_markup(_, True)
+    if buttons is None:
+        return
     try:
         return await CallbackQuery.edit_message_reply_markup(
             reply_markup=InlineKeyboardMarkup(buttons)
