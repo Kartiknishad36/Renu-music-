@@ -1,1 +1,6 @@
-python3 -m ShrutixMusic
+#!/usr/bin/env bash
+set -e
+# Render Web Service needs an open HTTP port — start health server first
+python3 -c "from health_server import start_health_server; start_health_server()" &
+sleep 1
+exec python3 -m ShrutixMusic
