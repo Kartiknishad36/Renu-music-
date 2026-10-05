@@ -10,9 +10,96 @@ import aiohttp
 
 API_URL = os.environ.get("SHRUTI_API_URL", "https://api.shrutibots.site")
 
-API_KEY = os.environ.get("SHRUTI_API_KEY", "YOUR_API_KEY") ## Get This API KEY FROM TELEGRAM BOT USERNAME: @SHRUTIAPIBOT 
+API_KEY = os.environ.get("SHRUTI_API_KEY", "YOUR_API_KEY")
 
 DOWNLOAD_DIR = "downloads"
+
+
+def _find_cookiefile() -> str:
+    candidates = []
+    env = os.environ.get("COOKIES_PATH") or os.environ.get("YOUTUBE_COOKIES") or ""
+    if env.strip():
+        candidates.append(os.path.abspath(os.path.expanduser(env.strip())))
+    candidates.extend([
+        os.path.abspath("cookies/Nand.txt"),
+        os.path.abspath("cookies/cookies.txt"),
+        os.path.abspath("cookies.txt"),
+        os.path.abspath("youtube_cookies.txt"),
+    ])
+    for path in candidates:
+        if path and os.path.isfile(path) and os.path.getsize(path) > 50:
+            return path
+    return ""
+
+
+COOKIEFILE = _find_cookiefile()
+if COOKIEFILE:
+    print(f"[youtube] cookies: {COOKIEFILE}")
+else:
+    print("[youtube] WARNING: no cookie file — YouTube may block downloads")
+
+
+def _ydl_opts(extra=None):
+    opts = {
+        "quiet": True,
+        "no_warnings": True,
+        "nocheckcertificate": True,
+        "geo_bypass": True,
+        "extractor_args": {
+            "youtube": {
+                "player_client": ["android", "ios", "tv_embedded", "web"],
+            }
+        },
+    }
+    if COOKIEFILE:
+        opts["cookiefile"] = COOKIEFILE
+    if extra:
+        opts.update(extra)
+    return opts
+
+
+async def _ytdlp_download(link: str, audio: bool = True) -> str:
+    video_id = link.split("v=")[-1].split("&")[0] if "v=" in link else link
+    os.makedirs(DOWNLOAD_DIR, exist_ok=True)
+    url = link if "http" in str(link) else f"https://www.youtube.com/watch?v={video_id}"
+    if audio:
+        outtmpl = os.path.join(DOWNLOAD_DIR, f"{video_id}.%(ext)s")
+        extra = {
+            "format": "bestaudio/best",
+            "outtmpl": outtmpl,
+            "postprocessors": [{
+                "key": "FFmpegExtractAudio",
+                "preferredcodec": "mp3",
+                "preferredquality": "192",
+            }],
+        }
+        expected = os.path.join(DOWNLOAD_DIR, f"{video_id}.mp3")
+    else:
+        outtmpl = os.path.join(DOWNLOAD_DIR, f"{video_id}.%(ext)s")
+        extra = {"format": "best[height<=720]/best", "outtmpl": outtmpl}
+        expected = None
+
+    def _run():
+        with yt_dlp.YoutubeDL(_ydl_opts(extra)) as ydl:
+            info = ydl.extract_info(url, download=True)
+            if expected and os.path.isfile(expected):
+                return expected
+            if info:
+                fn = ydl.prepare_filename(info)
+                base, _ = os.path.splitext(fn)
+                for ext in ("mp3", "m4a", "webm", "mp4", "mkv"):
+                    cand = base + "." + ext
+                    if os.path.isfile(cand):
+                        return cand
+                if os.path.isfile(fn):
+                    return fn
+            return None
+
+    try:
+        return await asyncio.get_event_loop().run_in_executor(None, _run)
+    except Exception as e:
+        print(f"[youtube] yt-dlp fail: {e}")
+        return None
 
 
 def _env_dir(name: str) -> str:
@@ -81,10 +168,11 @@ async def _download_media(link: str, kind: str, timeout: int) -> str:
             async with session.get(
                 f"{API_URL}/download",
                 params={"url": video_id, "type": kind, "api_key": API_KEY},
-                timeout=aiohttp.ClientTimeout(total=timeout)
+                timeout=aiohttp.ClientTimeout(total=timeout),
             ) as resp:
                 if resp.status != 200:
-                    return None
+                    print(f"[youtube] API status={resp.status}")
+                    raise RuntimeError(f"api status {resp.status}")
                 if external:
                     found = _find_external(external, video_id, extensions, resp)
                     if found:
@@ -94,14 +182,16 @@ async def _download_media(link: str, kind: str, timeout: int) -> str:
                         f.write(chunk)
         if os.path.exists(file_path) and os.path.getsize(file_path) > 0:
             return file_path
-        return None
-    except Exception:
+    except Exception as e:
+        print(f"[youtube] API download fail: {e}")
         if os.path.exists(file_path):
             try:
                 os.remove(file_path)
             except Exception:
                 pass
-        return None
+
+    print("[youtube] trying yt-dlp fallback...")
+    return await _ytdlp_download(link, audio=is_audio)
 
 
 async def download_song(link: str) -> str:
@@ -126,7 +216,6 @@ async def get_autoplay(
     video_id = video_id.split("v=")[-1].split("&")[0] if "v=" in video_id else video_id
     if not video_id or len(video_id) < 3:
         return []
-
     attempt = 0
     while attempt < retries:
         attempt += 1
@@ -151,7 +240,6 @@ async def get_autoplay(
             return []
         except Exception:
             return []
-
     return []
 
 
@@ -284,8 +372,7 @@ class YouTubeAPI:
             link = self.base + link
         if "&" in link:
             link = link.split("&")[0]
-        ytdl_opts = {"quiet": True}
-        ydl = yt_dlp.YoutubeDL(ytdl_opts)
+        ydl = yt_dlp.YoutubeDL(_ydl_opts())
         with ydl:
             formats_available = []
             r = ydl.extract_info(link, download=False)
