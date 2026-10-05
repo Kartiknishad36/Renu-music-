@@ -1,15 +1,17 @@
-# Render deploy config
-# Recommended: Background Worker (no public HTTP needed)
-# Alternative: Web Service also works now via health_server.py + PORT
+# Render Blueprint
+# Use Web Service (free) OR Background Worker (paid)
+# Web Service needs open PORT — health_server.py handles that.
 
 services:
-  - type: worker
+  - type: web
     name: renu-music
     runtime: docker
     plan: free
     region: oregon
     dockerfilePath: ./Dockerfile
     dockerCommand: bash start
+    healthCheckPath: /
     envVars:
       - key: PYTHONUNBUFFERED
         value: "1"
+      # PORT is set automatically by Render

@@ -1,35 +1,43 @@
 """
-Minimal HTTP health server for Render / Railway Web Services.
-Binds to $PORT so platform health checks pass.
-Telegram bot runs separately — this only answers GET / with 200 OK.
+HTTP health server for Render Web Service.
+Binds 0.0.0.0:$PORT so platform does not kill the service.
 """
 import os
 import threading
 from http.server import HTTPServer, BaseHTTPRequestHandler
+
+_server = None
 
 
 class _Handler(BaseHTTPRequestHandler):
     def do_GET(self):
         self.send_response(200)
         self.send_header("Content-Type", "text/plain")
+        self.send_header("Cache-Control", "no-cache")
         self.end_headers()
-        self.wfile.write(b"Renu Music OK")
+        self.wfile.write(b"Renu Music OK\n")
 
     def do_HEAD(self):
         self.send_response(200)
         self.end_headers()
 
     def log_message(self, format, *args):
-        pass
+        return
 
 
 def start_health_server():
-    port = int(os.environ.get("PORT", "10000"))
-    server = HTTPServer(("0.0.0.0", port), _Handler)
-    t = threading.Thread(target=server.serve_forever, daemon=True)
-    t.start()
-    print(f"[health] listening on 0.0.0.0:{port}")
-    return server
+    """Start daemon HTTP server on $PORT (default 10000)."""
+    global _server
+    port = int(os.environ.get("PORT") or os.environ.get("RENDER_PORT") or "10000")
+    try:
+        _server = HTTPServer(("0.0.0.0", port), _Handler)
+        t = threading.Thread(target=_server.serve_forever, name="health", daemon=True)
+        t.start()
+        print(f"[health] listening on 0.0.0.0:{port}")
+        return _server
+    except OSError as e:
+        print(f"[health] bind failed port={port}: {e}")
+        return None
 
 
 if __name__ == "__main__":

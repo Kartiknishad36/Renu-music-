@@ -1,6 +1,26 @@
 #!/usr/bin/env bash
-set -e
-# Keep health HTTP alive on $PORT (Render Web Service)
+# Render / Railway entry — health HTTP + bot with auto-restart
+set -u
+export PYTHONUNBUFFERED=1
+
+echo "[start] Renu Music boot..."
+
+# Health server in background (Web Service needs open PORT)
 python3 health_server.py &
+HEALTH_PID=$!
 sleep 1
-exec python3 -m ShrutixMusic
+
+# Auto-restart bot if it crashes (Render free can kill on errors)
+MAX_BACKOFF=60
+backoff=3
+while true; do
+  echo "[start] launching ShrutixMusic..."
+  python3 -m ShrutixMusic
+  code=$?
+  echo "[start] bot exited code=$code — restart in ${backoff}s"
+  sleep "$backoff"
+  backoff=$(( backoff * 2 ))
+  if [ "$backoff" -gt "$MAX_BACKOFF" ]; then
+    backoff=$MAX_BACKOFF
+  fi
+done
