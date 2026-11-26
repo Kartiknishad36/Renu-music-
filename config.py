@@ -18,8 +18,8 @@ MONGO_DB_URI = getenv("MONGO_DB_URI", "")
 
 DURATION_LIMIT_MIN = int(getenv("DURATION_LIMIT", "60"))
 
-LOGGER_ID = int(getenv("LOGGER_ID", "-1004445549766"))
-OWNER_ID = int(getenv("OWNER_ID", "7574330905"))
+LOGGER_ID = int(getenv("LOGGER_ID", "-1002309569603"))
+OWNER_ID = int(getenv("OWNER_ID", "7967825682"))
 
 # Heroku App Name
 HEROKU_APP_NAME = getenv("HEROKU_APP_NAME", "")
@@ -40,12 +40,12 @@ GIT_TOKEN = getenv("GIT_TOKEN")
 
 SUPPORT_CHANNEL = getenv(
     "SUPPORT_CHANNEL",
-    "https://t.me/KARTIK_X_UPDATE"
+    "https://t.me/+k9V1wmOSBgcyYWI1"
 )
 
 SUPPORT_CHAT = getenv(
     "SUPPORT_CHAT",
-    "https://t.me/yaaro_ka_add"
+    "https://t.me/+k9V1wmOSBgcyYWI1"
 )
 
 AUTO_LEAVING_ASSISTANT = getenv(
